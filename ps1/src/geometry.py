@@ -1,5 +1,6 @@
 from jaxtyping import Float
 from torch import Tensor
+import torch
 
 
 def homogenize_points(
@@ -7,7 +8,8 @@ def homogenize_points(
 ) -> Float[Tensor, "*batch dim+1"]:
     """Turn n-dimensional points into (n+1)-dimensional homogeneous points."""
 
-    raise NotImplementedError("This is your homework.")
+    ones = torch.ones_like(points[..., :1])
+    return torch.cat([points, ones], dim=-1)
 
 
 def homogenize_vectors(
@@ -15,7 +17,8 @@ def homogenize_vectors(
 ) -> Float[Tensor, "*batch dim+1"]:
     """Turn n-dimensional vectors into (n+1)-dimensional homogeneous vectors."""
 
-    raise NotImplementedError("This is your homework.")
+    zeros = torch.zeros_like(points[..., :1])
+    return torch.cat([points, zeros], dim=-1)
 
 
 def transform_rigid(
@@ -24,7 +27,7 @@ def transform_rigid(
 ) -> Float[Tensor, "*batch 4"]:
     """Apply a rigid-body transform to homogeneous points or vectors."""
 
-    raise NotImplementedError("This is your homework.")
+    return torch.dot(xyz, transform)
 
 
 def transform_world2cam(
