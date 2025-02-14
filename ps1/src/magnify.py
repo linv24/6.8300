@@ -44,6 +44,19 @@ def magnify_motion_local(
     im_size = im1.shape[0]
     magnified = np.zeros([im_size, im_size])
 
+    ''' provided pseudocode:
+    def magnify_motion_local(im1: np.ndarray, im2: np.ndarray, magnification_factor: int, sigma: int) -> np.ndarray:
+        """ Magnify motion using localized processing with Gaussian windows."""
+        X, Y = np.meshgrid(np.arange(im_size), np.arange(im_size))
+        for y in range(0, im_size, 2 * sigma):
+            for x in range(0, im_size, 2 * sigma):
+                # TODO: Create a Gaussian mask that covers the whole image and apply
+                # it to the images
+                # TODO: Magnify the phase changes
+
+        return magnified_image
+    '''
+
     raise NotImplementedError("This is your homework.")
 
 
@@ -70,5 +83,28 @@ def magnify_motion_video(
     """Magnifies subtle motions in the video frames using phase-based magnification."""
     num_frames, height, width, num_channels = frames.shape
     magnified = np.zeros_like(frames)
+
+    ''' provided pseudocode:
+    def magnify_motion_video(frames: np.ndarray, magnification_factor: int, sigma: int, alpha: float) -> np.ndarray:
+        """ Magnifies subtle motions in the video frames using phase-based magnification. """
+        X, Y = np.meshgrid(np.arange(width), np.arange(height))
+
+        for y in range(0, height, 2 * sigma):
+            for x in range(0, width, 2 * sigma):
+                # TODO: Create a Gaussian mask that covers the whole image
+
+                for channel_index in range(num_channels):
+                    # initialize a moving average
+                    window_avg_phase = None
+
+                    for frame_index in range(num_frames):
+                        #TODO: Apply gaussian mask to frame
+
+                        #TODO: Perform magnification
+
+                        #TODO: # Aggregate this window's contribution.
+
+        return magnified
+    '''
 
     raise NotImplementedError("This is your homework.")
