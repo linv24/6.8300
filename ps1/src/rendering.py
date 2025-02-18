@@ -23,16 +23,7 @@ def render_point_cloud(
     cam_coordinates = homogenized_vertices.unsqueeze(0) @ torch.inverse(extrinsics).transpose(1, 2)
     # cam_coordinates: (batch, vertex, 4)
     # intrinsics: (batch, 3, 3)
-    pixel_coordinates = torch.empty((batch_size, vertex_size, 2))
-    for batch in range(batch_size):
-        cam_coordinates_batch = cam_coordinates[batch]
-        intrinsics_batch = intrinsics[batch]
-        pixel_coordinates_batch = geometry.project(
-            cam_coordinates_batch,
-            intrinsics_batch.unsqueeze(0)
-        )
-        pixel_coordinates_batch = pixel_coordinates_batch.squeeze(0)
-        pixel_coordinates[batch] = pixel_coordinates_batch
+    pixel_coordinates = geometry.project(cam_coordinates, intrinsics.unsqueeze(1))[0]
 
     for batch in range(batch_size):
         for vertex in range(vertex_size):
