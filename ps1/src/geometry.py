@@ -27,7 +27,7 @@ def transform_rigid(
 ) -> Float[Tensor, "*batch 4"]:
     """Apply a rigid-body transform to homogeneous points or vectors."""
 
-    return torch.dot(xyz, transform)
+    return transform @ xyz
 
 
 def transform_world2cam(
@@ -38,7 +38,8 @@ def transform_world2cam(
     3D camera coordinates.
     """
 
-    raise NotImplementedError("This is your homework.")
+    world2cam = torch.inverse(cam2world)
+    return world2cam @ xyz
 
 
 def transform_cam2world(
@@ -49,7 +50,7 @@ def transform_cam2world(
     3D world coordinates.
     """
 
-    raise NotImplementedError("This is your homework.")
+    return cam2world @ xyz
 
 
 def project(
@@ -58,4 +59,8 @@ def project(
 ) -> Float[Tensor, "*batch 2"]:
     """Project homogenized 3D points in camera coordinates to pixel coordinates."""
 
-    raise NotImplementedError("This is your homework.")
+    # intrinsics is a 3x3 matrix; need a 3x4 homogenized matrix
+    homogenized_intrinsics = homogenize_vectors(intrinsics)
+    homogenized_pixel_coordinates = xyz @ homogenized_intrinsics.transpose(-2, -1)
+    w = homogenized_pixel_coordinates[..., -1].unsqueeze(-1)
+    return (homogenized_pixel_coordinates / w)[..., :-1]
