@@ -4,6 +4,11 @@ from typing import Literal, TypedDict
 from jaxtyping import Float
 from torch import Tensor
 
+import json
+from PIL import Image
+import torch
+import torchvision
+
 
 class PuzzleDataset(TypedDict):
     extrinsics: Float[Tensor, "batch 4 4"]
@@ -15,13 +20,27 @@ def get_kerberos() -> str:
     """Please return your kerberos ID as a string.
     This is required to match you with your specific puzzle dataset.
     """
-    raise NotImplementedError("This is your homework.")
+    return "linv"
 
 
 def load_dataset(path: Path) -> PuzzleDataset:
     """Load the dataset into the required format."""
 
-    raise NotImplementedError("This is your homework.")
+    with open(f"{path}/metadata.json", "r") as f:
+        metadata = json.load(f)
+    extrinsics, intrinsics = torch.tensor(metadata["extrinsics"]), torch.tensor(metadata["intrinsics"])
+
+    images_tensor = torch.empty((32, 256, 256))
+    for image_ix in range(32):
+        im = Image.open(f"{path}/images/{image_ix:02}.png")
+        im_tensor = torchvision.transforms.functional.pil_to_tensor(im)[0]
+        images_tensor[image_ix] = im_tensor
+
+    return PuzzleDataset(
+        extrinsics=extrinsics,
+        intrinsics=intrinsics,
+        images=images_tensor,
+    )
 
 
 def convert_dataset(dataset: PuzzleDataset) -> PuzzleDataset:
@@ -36,31 +55,42 @@ def convert_dataset(dataset: PuzzleDataset) -> PuzzleDataset:
 
     """
 
-    raise NotImplementedError("This is your homework.")
+    transformation_matrix = torch.tensor([
+        [ 0., -0., -1.],
+        [ 0., -1., -0.],
+        [ 1., -0., -0.]
+    ])
+    extrinsics = dataset["extrinsics"]
+    R = extrinsics[..., :3, :3]
+    transformed_R = R @ transformation_matrix
+    extrinsics[..., :3, :3] = transformed_R
+    dataset["extrinsics"] = extrinsics
+
+    return dataset
 
 
 def quiz_question_1() -> Literal["w2c", "c2w"]:
     """In what format was your puzzle dataset?"""
 
-    raise NotImplementedError("This is your homework.")
+    return "c2w"
 
 
 def quiz_question_2() -> Literal["+x", "-x", "+y", "-y", "+z", "-z"]:
     """In your puzzle dataset's format, what was the camera look vector?"""
 
-    raise NotImplementedError("This is your homework.")
+    return "+x"
 
 
 def quiz_question_3() -> Literal["+x", "-x", "+y", "-y", "+z", "-z"]:
     """In your puzzle dataset's format, what was the camera up vector?"""
 
-    raise NotImplementedError("This is your homework.")
+    return "+y"
 
 
 def quiz_question_4() -> Literal["+x", "-x", "+y", "-y", "+z", "-z"]:
     """In your puzzle dataset's format, what was the camera right vector?"""
 
-    raise NotImplementedError("This is your homework.")
+    return "-z"
 
 
 def explanation_of_problem_solving_process() -> str:
@@ -69,4 +99,15 @@ def explanation_of_problem_solving_process() -> str:
     solved the puzzle (brute force, deduction, etc.).
     """
 
-    raise NotImplementedError("This is your homework.")
+    ret = """
+    To determine the transformation matrix to convert to opencv format, I enumerated through
+    (1) all permutations of the identity matrix, to find the orientation of the right, up, and
+    look vectors, and (2) the sign of the columns of the transformation, to find the direction
+    of each axis.
+    I applied the transformation matris to the rotation matrix of the original extrinsics
+    matrices (first 3 rows and columns) and reconstructed the transformed matrix
+    to try to reconstruct the given images.
+    I tested each transformation matrix on the original set of vertices to try to
+    match the first example image in the dataset, and the transformation matrix used in
+    convert_dataset reproduced the given dataset images.
+    """

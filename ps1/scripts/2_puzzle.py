@@ -11,7 +11,7 @@ with install_import_hook(("src",), ("beartype", "beartype")):
 
 # Put the path to your puzzle here.
 DATASET_PATH = Path(
-    "/Users/aribakhan/PycharmProjects/6.8300-pset-1/autograder/hidden_from_students/data_input/puzzles/test_student"
+    "/Users/vincentlin246/git/6.8300/ps1/data/puzzles"
 )
 
 if __name__ == "__main__":
