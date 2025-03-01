@@ -4,6 +4,8 @@ import torch
 from jaxtyping import Float
 from torch import Tensor
 
+import numpy as np
+
 N = TypeVar("N")
 
 
@@ -52,7 +54,13 @@ def matrix_from_convolution_kernel(
         Tensor of shape (n, n)
             The circulant matrix representing the convolution with periodic boundary conditions.
     """
-    raise NotImplementedError("Homework!")
+    kernel_padded = torch.zeros(n)
+    kernel_size = kernel.shape[0]
+    kernel_padded[:kernel_size] = kernel
+
+    # roll matrix so kernel is centered at index 0
+    kernel_padded = kernel_padded.roll(shifts=-(kernel_size - 1) // 2, dims=0)
+    return torch.stack([torch.roll(kernel_padded, shifts=i, dims=0) for i in range(n)], dim=1)
 
 
 def image_operator_from_sep_kernels(
@@ -75,7 +83,16 @@ def image_operator_from_sep_kernels(
         Tensor of shape (h*w, h*w)
             The 2D convolution operator acting on a flattened image.
     """
-    raise NotImplementedError("Homework!")
+    h, w = img_shape
+
+    M_h = matrix_from_convolution_kernel(kernel_y, h)
+    M_w = matrix_from_convolution_kernel(kernel_x, w)
+
+    I_h = torch.eye(h)
+    I_w = torch.eye(w)
+
+    convolution_operator = torch.kron(M_h, I_w) @ torch.kron(I_h, M_w)
+    return convolution_operator
 
 
 def eigendecomposition(
@@ -95,7 +112,12 @@ def eigendecomposition(
             eigenvalues: Tensor of shape (N,)
             eigenvectors: Tensor of shape (N, N)
     """
-    raise NotImplementedError("Homework!")
+    eigenvalues, eigenvectors = torch.linalg.eigh(operator)
+
+    if descending:
+        sorted_indices = torch.argsort(eigenvalues, descending=descending)
+        return eigenvalues[sorted_indices], eigenvectors[:, sorted_indices]
+    return eigenvalues, eigenvectors
 
 
 def fourier_transform_operator(
@@ -114,7 +136,7 @@ def fourier_transform_operator(
         Tensor of shape (N, N)
             The operator represented in the Fourier basis.
     """
-    raise NotImplementedError("Homework!")
+    return basis.T @ operator @ basis
 
 
 def fourier_transform(
@@ -133,7 +155,7 @@ def fourier_transform(
         Tensor of shape (N,)
             The image represented in the Fourier domain.
     """
-    raise NotImplementedError("Homework!")
+    return basis.T @ img
 
 
 def inv_fourier_transform(
@@ -152,4 +174,4 @@ def inv_fourier_transform(
         Tensor of shape (N,)
             The reconstructed image in pixel space.
     """
-    raise NotImplementedError("Homework!")
+    return basis @ fourier_img
