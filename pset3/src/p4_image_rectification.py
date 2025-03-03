@@ -110,6 +110,8 @@ def show_matches(img1: np.array,
 if __name__ == '__main__':
     if not os.path.exists(env.p4.output):
         os.makedirs(env.p4.output)
+    expected_e1, expected_e2 = np.load(env.p4.expected_e1), np.load(env.p4.expected_e2)
+    expected_H1, expected_H2 = np.load(env.p4.expected_H1), np.load(env.p4.expected_H2)
     im1 = utils.load_image(env.p3.const_im1)
     im2 = utils.load_image(env.p3.const_im2)
 
@@ -123,12 +125,20 @@ if __name__ == '__main__':
     e2 = compute_epipole(points2, points1, F.transpose())
     print("e1", e1)
     print("e2", e2)
+    assert np.allclose(e1, expected_e1, rtol=1e-2), f"e1 does not match this expected value:\n{expected_e1}"
+    assert np.allclose(e2, expected_e2, rtol=1e-2), f"e2 does not match this expected value:\n{expected_e2}"
+    np.save(env.p4.e1, e1)
+    np.save(env.p4.e2, e2)
 
     # Part 4.b
     H1, H2 = compute_matching_homographies(e2, F, im2, points1, points2)
     print("H1:\n", H1)
     print
     print("H2:\n", H2)
+    assert np.allclose(H1, expected_H1, rtol=1e-2), f"H1 does not match this expected value:\n{expected_H1}"
+    assert np.allclose(H2, expected_H2, rtol=1e-2), f"H2 does not match this expected value:\n{expected_H2}"
+    np.save(env.p4.H1, H1)
+    np.save(env.p4.H2, H2)
 
     # Part 4.c
     rectified_im1, offset1 = compute_rectified_image(im1, H1)

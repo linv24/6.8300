@@ -154,6 +154,12 @@ def get_epipolar_img(img: np.ndarray,
 if __name__ == '__main__':
     if not os.path.exists(env.p3.output):
         os.makedirs(env.p3.output)
+    expected_F_LLS = np.load(env.p3.expected_F_LLS)
+    expected_dist_im1_LLS, expected_dist_im2_LLS = np.load(env.p3.expected_dist_LLS)
+
+    expected_F_normalized = np.load(env.p3.expected_F_normalized)
+    expected_dist_im1_normalized, expected_dist_im2_normalized = np.load(env.p3.expected_dist_normalized)
+
     im1 = utils.load_image(env.p3.const_im1)
     im2 = utils.load_image(env.p3.const_im2)
 
@@ -164,19 +170,34 @@ if __name__ == '__main__':
     # Part 3.a
     F_lls = lstsq_eight_point_alg(points1, points2)
     print("Fundamental Matrix from LLS  8-point algorithm:\n", F_lls)
+    assert np.allclose(F_lls, expected_F_LLS, atol=1e-2), f"Fundamental matrix does not match this expected matrix:\n{expected_F_LLS}"
+    np.save(env.p3.F_LLS, F_lls)
+
+    dist_im1_LLS = compute_distance_to_epipolar_lines(points1, points2, F_lls)
+    dist_im2_LLS = compute_distance_to_epipolar_lines(points2, points1, F_lls.T)
     print("Distance to lines in image 1 for LLS:", \
-        compute_distance_to_epipolar_lines(points1, points2, F_lls))
+        dist_im1_LLS)
     print("Distance to lines in image 2 for LLS:", \
-        compute_distance_to_epipolar_lines(points2, points1, F_lls.T))
+        dist_im2_LLS)
+    assert np.allclose(dist_im1_LLS, expected_dist_im1_LLS, atol=1e-2), f"Distance to lines in image 1 does not match this expected distance: {expected_dist_im1_LLS}"
+    assert np.allclose(dist_im2_LLS, expected_dist_im2_LLS, atol=1e-2), f"Distance to lines in image 2 does not match this expected distance: {expected_dist_im2_LLS}"
+    np.save(env.p3.dist_LLS, np.array([dist_im1_LLS, dist_im2_LLS]))
 
     # Part 3.b
     F_normalized = normalized_eight_point_alg(points1, points2)
     print("Fundamental Matrix from normalized 8-point algorithm:\n", \
         F_normalized)
+    assert np.allclose(F_normalized, expected_F_normalized, atol=1e-2), f"Fundamental matrix does not match this expected matrix:\n{expected_F_normalized}"
+
+    dist_im1_normalized = compute_distance_to_epipolar_lines(points1, points2, F_normalized)
+    dist_im2_normalized = compute_distance_to_epipolar_lines(points2, points1, F_normalized.T)
     print("Distance to lines in image 1 for normalized:", \
-        compute_distance_to_epipolar_lines(points1, points2, F_normalized))
+        dist_im1_normalized)
     print("Distance to lines in image 2 for normalized:", \
-        compute_distance_to_epipolar_lines(points2, points1, F_normalized.T))
+        dist_im2_normalized)
+    assert np.allclose(dist_im1_normalized, expected_dist_im1_normalized, atol=1e-2), f"Distance to lines in image 1 does not match this expected distance: {expected_dist_im1_normalized}"
+    assert np.allclose(dist_im2_normalized, expected_dist_im2_normalized, atol=1e-2), f"Distance to lines in image 2 does not match this expected distance: {expected_dist_im2_normalized}"
+    np.save(env.p3.dist_normalized, np.array([dist_im1_normalized, dist_im2_normalized]))
 
     # Part 3.c
     lines1 = compute_epipolar_lines(points2, F_lls.T)

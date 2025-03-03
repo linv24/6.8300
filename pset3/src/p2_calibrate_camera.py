@@ -78,6 +78,8 @@ def draw_corners(image: np.ndarray, chessboard_size: tuple, corners: np.ndarray)
 if __name__ == "__main__":
     if not os.path.exists(env.p2.output):
         os.makedirs(env.p2.output)  
+    expected_camera_matrix = np.load(env.p2.expected_camera_matrix)
+    expected_dist_coeffs = np.load(env.p2.expected_dist_coeffs)
     # Part 2.a
     ideal_intrinsic_matrix = np.array([
         [0, 0, 0],
@@ -100,9 +102,11 @@ if __name__ == "__main__":
     camera_matrix, dist_coeffs = calibrate_camera(object_points, corners, grayscale_image.shape[::-1])
     print("Camera Matrix:")
     print(camera_matrix)
+    assert np.allclose(camera_matrix, expected_camera_matrix, atol=1e-2), f"Camera matrix does not match this expected matrix:\n{expected_camera_matrix}"
     np.save(env.p2.camera_matrix, camera_matrix)
     print("\nDistortion Coefficients:")
     print(dist_coeffs)
+    assert np.allclose(dist_coeffs, expected_dist_coeffs, atol=1e-2), f"Distortion coefficients do not match these expected coefficients:\n{expected_dist_coeffs}"
     np.save(env.p2.dist_coeff, dist_coeffs)
 
     # Part 2.d

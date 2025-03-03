@@ -180,6 +180,9 @@ def show_points_matplotlib(points3D: np.ndarray) -> None:
 if __name__ == '__main__':
     if not os.path.exists(env.p5.output):
         os.makedirs(env.p5.output)
+    expected_R = np.load(env.p5.expected_R)
+    expected_T = np.load(env.p5.expected_T)
+
     chessboard_size = (16, 10)  # (columns, rows)
     import argparse
     parser = argparse.ArgumentParser()
@@ -217,6 +220,8 @@ if __name__ == '__main__':
     print
     print("Best R:\n", R)
     print("Best T:\n", T)
+    assert np.allclose(R, expected_R, atol=1e-2), f"R does not match this expected value:\n{expected_R}"
+    assert np.allclose(T, expected_T, atol=1e-2), f"T does not match this expected value:\n{expected_T}"
 
     np.save(env.p5.rotation_matrix, R)
     np.save(env.p5.translation_matrix, T)

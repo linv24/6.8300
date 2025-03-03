@@ -75,7 +75,7 @@ def draw_corners(pil_img: Image,
 if __name__ == "__main__":
     if not os.path.exists(env.p1.output):
         os.makedirs(env.p1.output)
-    engine.get_distorted_chessboard(env.p1.chessboard_path)
+    # engine.get_distorted_chessboard(env.p1.chessboard_path)
 
     image = Image.open(env.p1.chessboard_path)
     contours = find_chessboard_contours(image)
