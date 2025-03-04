@@ -34,7 +34,7 @@ Images that you will create will be save to their respective problem folder in `
 
 ## Part 1 - Edge Detection (15 pts)
 
-The most important part of any SfM pipeline is calibrating the camera. This is commonly done with a chessboard object containing a specified number of squares. The best calibration comes from chessboards that space the entirety of the image plane, so chessboard images are not necessarly square like a normal chessboard. In this exercise, you will identify the edges, or the contours of the image. This is a critical step in calibrating the camera. There are many possible implementations for edge detectors, we only require that you not use an existing utility like opencv to detect contours. 
+The most important part of any SfM pipeline is calibrating the camera. This is commonly done with a chessboard object containing a specified number of squares. The best calibration comes from chessboards that space the entirety of the image plane, so chessboard images are not necessarly square like a normal chessboard. In this exercise, you will identify the edges, or the contours of the image. This is a critical step in calibrating the camera. There are many possible implementations for edge detectors, we only require that you not use an existing utility like opencv to detect contours, or other similiar libraries.
 
 ### 1.a - Image Preperation (5 pts)
 
@@ -58,7 +58,7 @@ In previous psets, you have already been introduced to the Intrinsic Camera Matr
 
 Where `f_x, f_y` are the focal ratios for that axis and `c_x, c_y` are the `u, v` coordinates for the center of the image.
 
-Imagine a pinhole camera with a small aperture (“pinhole”) at the origin of our coordinate system. The camera is oriented so that the optical (principal) axis is the Z-axis, pointing forward. The image plane is placed at Z = f (focal length f ) in front of the pinhole. A pinhole camera creates a perfect image with no distortions where `f_x = f_y = f_r * max(image_height, image_width)` and `f_r = 1 / (tan(1/FoV)` where the FoV (Field of View) is in radians. Assume the FoV is 45 degrees. Calculate an intrinsic matrix for the image found in `data/p1_edge_identification/chessboard.png` and assign the value of `ideal_instrinsic_matrix` in `p2_calibrate_camera.py`.
+Imagine a pinhole camera with a small aperture (“pinhole”) at the origin of our coordinate system. The camera is oriented so that the optical (principal) axis is the Z-axis, pointing forward. The image plane is placed at Z = f (focal length f ) in front of the pinhole. A pinhole camera creates a perfect image with no distortions where `f_x = f_y = f_r * min(image_height, image_width)` and `f_r = 1 / 2tan(FoV/2)` where the FoV (Field of View) is in radians. Assume the FoV is 45 degrees. Calculate an intrinsic matrix for the image found in `data/p1_edge_identification/chessboard.png` and assign the value of `ideal_instrinsic_matrix` in `p2_calibrate_camera.py`.
 
 ### 2.b - Find Corners (2 pts)
 
@@ -88,11 +88,11 @@ $$x_\text{distorted} = x(1 + k_1 r^2 + k_2 r^4 + k_3 r^6) + 2p_1xy + p_2(r^2 + 2
 
 $$y_\text{distorted} = y(1 + k_1 r^2 + k_2 r^4 + k_3 r^6) + 2p_2xy + p_1(r^2 + 2y^2)$$
 
-where 
+where
 
 $$r^2 = x^2 + y^2$$
 
-Your task is to undo the distortion of the original image using the recovered intrinsic matrix and distortion coefficients by completing the definition of `undistort_image(image, camera_matrix, dist_coeffs)` in `p2_calibrate_camera.py`. It is helpful to break the problem down into two parts: 
+Your task is to undo the distortion of the original image using the recovered intrinsic matrix and distortion coefficients by completing the definition of `undistort_image(image, camera_matrix, dist_coeffs)` in `p2_calibrate_camera.py`. It is helpful to break the problem down into two parts:
 1. Recover the Optimal Camera Matrix, and
 2. Undistort the image and apply the new Optimal Camera Matrix.
 
@@ -126,7 +126,7 @@ The normalization further refines $F$. Notice how the average distance to the ep
 
 Now implement `compute_epipolar_lines`. Once you have a fundamental matrix, you can compute the corresponding epipolar line for any given point in one image. The epipolar line is computed by multiplying the fundamental matrix with the homogeneous coordinate of a point, where `l = F.dot(p)`.
 
-$$l$$ is the line defined by $$Ax + By + C = 0$$. Extract the line parameters as a slope-intercept $$(m, b)$$ in $$y = mx + b$$ for easy drawing on the image.
+$l$ is the line defined by $Ax + By + C = 0$. Extract the line parameters as a slope-intercept $(m, b)$ in $y = mx + b$ for easy drawing on the image.
 
 Run `python -m src.p3_image_rectification` to produce the resulting images. You should now see that all epipolar lines pass through or close to the defined points.
 
@@ -148,9 +148,9 @@ Once you have the epipoles, the next step is to compute the homographies that wi
 
 Implement the function `compute_matching_homographies`.
 
-For the first image, use the computed $$H_2$$ and additional constraints based on the fundamental matrix to compute a matching homography $$H_1$$ that maintains the correspondence between the two rectified images.
+For the first image, use the computed $H_2$ and additional constraints based on the fundamental matrix to compute a matching homography $H_1$ that maintains the correspondence between the two rectified images.
 
-For the second image, translate the image so that its center is at the origin. Rotate the image so that the epipole is aligned with the x-axis. Apply a projective transformation that sends the epipole to infinity. Combine these steps into a single homography $$H_2$$.
+For the second image, translate the image so that its center is at the origin. Rotate the image so that the epipole is aligned with the x-axis. Apply a projective transformation that sends the epipole to infinity. Combine these steps into a single homography $H_2$.
 
 Solve for the affine component using a least-squares fit (`np.linalg.lstsq`) that relates the transformed matching points in the two images. Do not use OpenCV functions in this section.
 
@@ -208,7 +208,7 @@ To resolve ambiguities, triangulate the 3D points for each candidate pose. The c
 
 Implement `get_identity_projection_matrix` and `get_relative_projection_matrix`. The identity projection should be the dot product of the camera matrix and \[I|0\]. P2 should similarly be the the dot product of the camera matrix and \[R|T\].
 
-With the projection matrixes defined, we can now triangulate the points relative to the projections. This yeilds a 4D homogenous point, which we convert to 3D points. You can see the 3D points in the matplotlib plot. 
+With the projection matrixes defined, we can now triangulate the points relative to the projections. This yeilds a 4D homogenous point, which we convert to 3D points. You can see the 3D points in the matplotlib plot.
 
 The singular values of the fundamental matrix are also listed as a sanity check. F should have a rank of 2. If the second value in value is very close to zero, the solution may be degenerate, which would result in a linear point cloud.
 
@@ -232,5 +232,5 @@ This was our output point cloud from the statue dataset (using some handcrafted 
 Feel free to run camera calibration on your own phone using a printed-out checkerboard if you want to capture real-world images! We recommend printing out the checkerboard intead of taking pictures of the checkerboard on your screen to reduce moire effects. The checkerboard should cover the entire FoV of the camera.
 
 # Attribution
-Parts of this pset were inspired by CS231A, taught by Jeanette Bohg in spring 2024.
+Parts of this pset were inspired by CS231A, taught by Jeannette Bohg and Silvio Savarese in spring 2024.
 The Arc de Triomphe model can be found here: https://rigmodels.com/model.php?view=Arc_de_Triomphe_3d_model__65937fd27de647c0a8ac99ce8275c03e. It has a royalty-free license.
