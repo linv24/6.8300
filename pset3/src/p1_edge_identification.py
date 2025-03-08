@@ -51,7 +51,7 @@ def find_contours(binary_image: np.ndarray, foreground: int=0) -> np.ndarray:
 
     height, width = edges.shape
     edge_coordinates = [(y, x) for x in range(width) for y in range(height)
-                        if edges[y, x] > BINARIZE_THRESHOLD]
+                        if edges[y, x] >= BINARIZE_THRESHOLD]
 
     return edge_coordinates
 
@@ -67,7 +67,7 @@ class ContourImage():
         """
         grayscale_image = self.image.convert("L")
         grayscale_array = np.array(grayscale_image)
-        binarized_array = (grayscale_array > BINARIZE_THRESHOLD) * 1
+        binarized_array = (grayscale_array >= BINARIZE_THRESHOLD) * 1
         self.binarized_image = Image.fromarray(binarized_array.astype(np.uint8))
 
     def show(self) -> None:
