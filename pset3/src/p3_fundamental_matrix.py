@@ -11,7 +11,7 @@ import numpy as np
 
 def lstsq_eight_point_alg(points1: np.array, points2: np.array) -> np.array:
     '''
-    Computes the fundamental matrix from matching points using 
+    Computes the fundamental matrix from matching points using
     linear least squares eight point algorithm
     Arguments:
         points1 - N points in the first image that match with points2
@@ -21,8 +21,23 @@ def lstsq_eight_point_alg(points1: np.array, points2: np.array) -> np.array:
     Returns:
         F - the fundamental matrix such that (points2)^T * F * points1 = 0
     '''
-    # TODO: Implement this method!
-    raise NotImplementedError
+    # [x1x2, x1y2, x1, y1x2, y1y2, y1, x2, y2, 1]
+    N = points1.shape[0]
+    W = np.zeros((N, 9))
+    for i in range(N):
+        x1, y1, _ = points1[i]
+        x2, y2, _ = points2[i]
+        W[i] = [
+            x1*x2, x1*y2, x1, y1*x2, y1*y2, y1, x2, y2, 1
+        ]
+    _, _, V_t = np.linalg.svd(W)
+    F = V_t[-1].reshape((3,3)).T # estimate is the last singular column of V/last row of V_t
+    # zero out smallest singular value to get rank 2 fundamental matrix
+    U, S, V_t = np.linalg.svd(F)
+    S[-1] = 0
+    F = U @ np.diag(S) @ V_t
+
+    return F
 
 
 def normalized_eight_point_alg(points1: np.array, points2: np.array) -> np.array:
@@ -39,8 +54,37 @@ def normalized_eight_point_alg(points1: np.array, points2: np.array) -> np.array
     Please see lecture notes and slides to see how the normalized eight
     point algorithm works
     '''
-    # TODO: Implement this method!
-    raise NotImplementedError
+    def normalize_points(points):
+        """
+        Assumes points are in homogenous form.
+        Return normalized points and transformation matrix T
+        """
+
+        centroid = np.mean(points[:, :-1], axis=0)
+        mean_dist = np.mean(np.linalg.norm(
+            points[:, :-1] - centroid,
+            axis=1
+        ))
+        dist_scale = np.sqrt(2) / mean_dist
+
+        T = np.array([
+            [dist_scale, 0, -dist_scale * centroid[0]],
+            [0, dist_scale, -dist_scale * centroid[1]],
+            [0, 0, 1]
+        ])
+
+        normalized_points = points @ T.T
+        return normalized_points, T
+
+    normalized_points1, T_1 = normalize_points(points1)
+    normalized_points2, T_2 = normalize_points(points2)
+
+    # get estimated fundamental matrix with normalized points
+    F_normalized = lstsq_eight_point_alg(normalized_points1, normalized_points2)
+
+    # denormalize F
+    F = T_2.T @ F_normalized @ T_1
+    return F
 
 def compute_epipolar_lines(points: np.array, F: np.array) -> np.array:
     """
@@ -48,20 +92,26 @@ def compute_epipolar_lines(points: np.array, F: np.array) -> np.array:
     given matching points in two images and the fundamental matrix
     Arguments:
         points - N points in the first image that match with points2
-        F - the Fundamental matrix such that (points1)^T * F * points2 = 0    
+        F - the Fundamental matrix such that (points1)^T * F * points2 = 0
     Returns:
         lines - the epipolar lines in homogenous coordinates
     """
-    # TODO: Implement this method!
-    raise NotImplementedError
+    lines_standard = np.stack([F.dot(p) for p in points])
+    A, B, C = lines_standard[:, 0], lines_standard[:, 1], lines_standard[:, 2]
+    m = -A / B
+    b = -C / B
+
+    lines_slopeint = np.stack((m, b), axis=1)
+
+    return lines_slopeint
 
 
-def show_epipolar_imgs(img1: np.ndarray, 
-                       img2: np.ndarray, 
-                       lines1: np.ndarray, 
-                       lines2: np.ndarray, 
-                       pts1: np.ndarray, 
-                       pts2: np.ndarray, 
+def show_epipolar_imgs(img1: np.ndarray,
+                       img2: np.ndarray,
+                       lines1: np.ndarray,
+                       lines2: np.ndarray,
+                       pts1: np.ndarray,
+                       pts2: np.ndarray,
                        offset: int=0) -> np.ndarray:
     epi_img1 = get_epipolar_img(img1, lines1, pts1)
     epi_img2 = get_epipolar_img(img2, lines2, pts2)
@@ -74,7 +124,7 @@ def show_epipolar_imgs(img1: np.ndarray,
         h2, w2, c2 = epi_img2.shape
         padding = np.zeros((offset, w2, c2), dtype=epi_img1.dtype)
         epi_img2 = np.vstack((padding, epi_img2))
-    
+
     h1, w1, c1 = epi_img1.shape
     h2, w2, c2 = epi_img2.shape
 
@@ -95,11 +145,11 @@ def show_epipolar_imgs(img1: np.ndarray,
     plt.title("Epipolar Lines")
     plt.show()
 
-    return combined_img   
+    return combined_img
 
-def draw_points(img: np.ndarray, 
-                points: np.ndarray, 
-                color: tuple=(0, 255, 0), 
+def draw_points(img: np.ndarray,
+                points: np.ndarray,
+                color: tuple=(0, 255, 0),
                 radius: int=5) -> np.ndarray:
     img_with_corners = Image.fromarray(img)
     draw = ImageDraw.Draw(img_with_corners)
@@ -108,12 +158,12 @@ def draw_points(img: np.ndarray,
         left_up_point = (x - radius, y - radius)
         right_down_point = (x + radius, y + radius)
         draw.ellipse([left_up_point, right_down_point], outline=color, width=2)
-    
+
     return np.array(img_with_corners)
 
-def draw_lines(img: np.ndarray, 
-               lines: np.ndarray, 
-               color: tuple=(255, 0, 0), 
+def draw_lines(img: np.ndarray,
+               lines: np.ndarray,
+               color: tuple=(255, 0, 0),
                thickness: int=3) -> np.ndarray:
     from PIL import Image, ImageDraw
     import numpy as np
@@ -134,8 +184,8 @@ def draw_lines(img: np.ndarray,
     return np.array(img_with_lines)
 
 
-def compute_distance_to_epipolar_lines(points1: np.array, 
-                                       points2: np.array, 
+def compute_distance_to_epipolar_lines(points1: np.array,
+                                       points2: np.array,
                                        F: np.array) -> float:
     l = F.T.dot(points2.T)
     # distance from point(x0, y0) to line: Ax + By + C = 0 is
@@ -144,12 +194,12 @@ def compute_distance_to_epipolar_lines(points1: np.array,
     return d
 
 
-def get_epipolar_img(img: np.ndarray, 
-                     lines: np.ndarray, 
+def get_epipolar_img(img: np.ndarray,
+                     lines: np.ndarray,
                      points: np.ndarray) -> np.ndarray:
     lines_img = draw_lines(img, lines)
     points_img = draw_points(lines_img, points)
-    return points_img 
+    return points_img
 
 if __name__ == '__main__':
     if not os.path.exists(env.p3.output):
