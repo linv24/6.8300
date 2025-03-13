@@ -114,8 +114,8 @@ if __name__ == "__main__":
     expected_dist_coeffs = np.load(env.p2.expected_dist_coeffs)
     # Part 2.a
     ideal_intrinsic_matrix = np.array([
-        [237.9237668337108, 0, 0],
-        [0, 237.9237668337108, 0],
+        [1029.662084352125, 0, 682.5],
+        [0, 1029.662084352125, 426.5],
         [0, 0, 1]
     ])
 
