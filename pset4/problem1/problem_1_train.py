@@ -10,6 +10,8 @@ from problem_1_mlp import MLP
 from problem_1_siren import SIREN
 from utils import ImageDataset, plot, psnr
 from typing import Dict, Any
+import tqdm
+import matplotlib.pyplot as plt
 
 
 def train(
@@ -23,7 +25,7 @@ def train(
 ):
     """
     Train the model on the provided dataset.
-    
+
     Given the **kwargs, initialize a neural field model and an optimizer.
     Then, train the model and log the loss and PSNR for each step. Examples
     in the notebook use MSE loss, but feel free to experiment with other
@@ -43,4 +45,36 @@ def train(
 
     PSNR is defined here: https://en.wikipedia.org/wiki/Peak_signal-to-noise_ratio
     """
-    raise NotImplementedError("Not implemented!")
+
+    if model == "MLP":
+        model = MLP(**kwargs).to(device)
+    elif model == "SIREN":
+        model = SIREN(**kwargs).to(device)
+    optimizer = torch.optim.Adam(model.parameters(), lr=lr)
+    loss_fn = torch.nn.MSELoss()
+
+    epoch_loss = []
+    epoch_psnr = []
+
+    for step in tqdm.tqdm(range(total_steps), total=total_steps):
+        model.train()
+
+        coords, target = dataset[0]
+        coords, target = coords.to(device), target.to(device)
+
+        output, coords = model(coords)
+        loss = loss_fn(output, target)
+        optimizer.zero_grad()
+        loss.backward(retain_graph=True)
+        optimizer.step()
+
+        epoch_loss.append(loss.item())
+        epoch_psnr.append(psnr(output, target))
+
+        if step % steps_til_summary == 0:
+            output, coords = model(coords)
+            step_grad = gradient(output, coords)
+            step_laplace = laplace(output, coords)
+            plot(dataset, output, step_grad, step_laplace)
+
+    return epoch_loss, epoch_psnr
