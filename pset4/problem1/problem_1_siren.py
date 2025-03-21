@@ -16,6 +16,7 @@ import torch
 import torch.nn as nn
 import jaxtyping
 from typing import Tuple
+import numpy as np
 
 
 class SineLayer(nn.Module):
@@ -40,8 +41,9 @@ class SineLayer(nn.Module):
         """
         # first layer: sin(w_0 * Wx + b)
         # general: sin(w^Tx + b)
-        a, b =  -torch.sqrt(6 / in_features), torch.sqrt(6 / in_features)
-        self.linear.weight = (a - b) * torch.rand((in_features,)) + b
+        a, b =  -np.sqrt(6 / in_features), np.sqrt(6 / in_features)
+        # self.linear.weight = (a - b) * torch.rand((in_features,)) + b
+        self.linear.weight.uniform_(a, b)
         if is_first_layer:
             # scale by factor of omega_0
             self.linear.weight *= self.omega_0
