@@ -68,10 +68,10 @@ def train(
         loss.backward(retain_graph=True)
         optimizer.step()
 
-        epoch_loss.append(loss.item())
-        epoch_psnr.append(psnr(output, target))
+        epoch_loss.append(loss.detach().item())
+        epoch_psnr.append(psnr(output, target).detach().item())
 
-        if step % steps_til_summary == 0:
+        if (step+1) % steps_til_summary == 0:
             output, coords = model(coords)
             step_grad = gradient(output, coords)
             step_laplace = laplace(output, coords)

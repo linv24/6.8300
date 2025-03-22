@@ -39,17 +39,15 @@ class SineLayer(nn.Module):
         Initialize the weights of the layer according to the scheme
         described in the SIREN paper.
         """
-        # first layer: sin(w_0 * Wx + b)
-        # general: sin(w^Tx + b)
-        a, b =  -np.sqrt(6 / in_features), np.sqrt(6 / in_features)
-        # self.linear.weight = (a - b) * torch.rand((in_features,)) + b
-        self.linear.weight.uniform_(a, b)
         if is_first_layer:
-            # scale by factor of omega_0
-            self.linear.weight *= self.omega_0
+            # first layer: sin(w_0 * Wx + b)
+            self.linear.weight.uniform_(-1 / in_features, 1 / in_features)
+        else:
+            self.linear.weight.uniform_(-np.sqrt(6 / in_features) / self.omega_0, 
+                                        np.sqrt(6 / in_features) / self.omega_0)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        return torch.sin(self.linear(x))
+        return torch.sin(self.omega_0 * self.linear(x))
 
 
 class SIREN(nn.Module):
