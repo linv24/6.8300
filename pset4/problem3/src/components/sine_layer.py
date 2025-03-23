@@ -19,7 +19,13 @@ class SineLayer(nn.Module):
         raise NotImplementedError("Use your problem1 implementation")
 
     def init_weights(self):
-        raise NotImplementedError("Use your problem1 implementation")
+        # first layer: sin(w_0 * Wx + b)
+        # general: sin(w^Tx + b)
+        a, b =  -np.sqrt(6 / self.d_in), np.sqrt(6 / self.d_in)
+        self.linear.weight.uniform_(a, b)
+        if self.is_first:
+            # scale by factor of omega_0
+            self.linear.weight *= self.omega_0
 
     def forward(self, input):
-        raise NotImplementedError("Use your problem1 implementation")
+        return torch.sin(self.linear(input))

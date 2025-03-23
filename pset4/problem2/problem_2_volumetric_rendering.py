@@ -131,7 +131,21 @@ def camera_param_to_rays(c2w, intrinsics, H=128, W=128):
     # 3. Transform rays from camera space to world space using c2w
     # 4. Return ray origins and directions of shape [H, W, 3]
 
-    pass
+    fx, fy, cx, cy = intrinsics
+
+    x_pixel, y_pixel = torch.meshgrid(torch.arange(W), torch.arange(H), indexing="xy")
+    x_cam = (x_pixel - cx + 0.5) / fx # shift coords in camera plane by 0.5
+    y_cam = (y_pixel - cy + 0.5) / fy
+    z_cam = torch.ones_like(x_cam)
+
+    ray_directions = torch.stack((x_cam, y_cam, z_cam), dim=-1) # shape: (H, W, 3)
+    ray_directions = ray_directions @ c2w[:3, :3].T
+    norms = torch.norm(ray_directions, dim=-1, keepdim=True)
+    ray_directions = ray_directions / norms # normalize
+
+    ray_origins = c2w[:3, 3].expand(H, W, 3)
+
+    return ray_origins, ray_directions
 
 
 ############################
@@ -156,12 +170,21 @@ def sample_points_on_rays(
         points: [H, W, num_samples, 3] sampled points in 3D space
         ts: [num_samples] distances along the rays
     """
-    # TODO: Implement this function
     # 1. Generate uniformly spaced samples along each ray
     # 2. Compute the 3D coordinates of each sample point
     # 3. Return an array of sample points with shape [H, W, num_samples, 3]
 
-    pass
+    ts = torch.linspace(t_near, t_far, num_samples)
+
+    # points = origin + t * direction
+    # align tensors for broadcasting
+    ts = ts.view(1, 1, num_samples, 1) # (1, 1, num_samples, 1)
+    ray_origins = ray_origins.unsqueeze(2) # (H, W, 1, 3)
+    ray_directions = ray_directions.unsqueeze(2) # (H, W, 2, 3)
+
+    points = ray_origins + ts * ray_directions
+
+    return points, ts.squeeze()
 
 
 ############################
@@ -188,7 +211,19 @@ def volume_rendering(densities, colors, deltas):
     #    - Update accumulated color and transmittance
     # 3. Return the final rendered image
 
-    pass
+    # alpha values: α_i = 1 - exp(-σ_i * δ_i)
+    alphas = 1 - torch.exp(-densities.squeeze(-1) * deltas.view(1, 1, -1))  # [H, W, num_samples]
+
+    # transmittance: T_i = ∏_{j=1}^{i-1} (1 - α_j)
+    transmittance = torch.cumprod(torch.cat([torch.ones_like(alphas[..., :1]), 1 - alphas + 1e-10], dim=-1), dim=-1)[..., :-1]
+
+    # weighted color contributions: C = ∑ T_i * α_i * c_i
+    weighted_colors = transmittance[..., None] * alphas[..., None] * colors  # [H, W, num_samples, 3]
+
+    # final rendered color per pixel
+    image = torch.sum(weighted_colors, dim=-2)  # [H, W, 3]
+
+    return image
 
 
 ############################

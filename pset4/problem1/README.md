@@ -58,6 +58,8 @@ Include plots and analyses for the following investigations in `problem_1.pdf`:
 
 Your visualization should look like what is in `should_look_like/` (not in the minutiae, but it should display all of your `problem1_gradients.py` implementations over the course of training along with the image as output by your model based on the coordinates, as well as a PSNR curve comparing different outputs).
 
+Also include the best picture that you get from experimentation (both MLP and SIREN??)
+
 **For extra credit:** implement another (nontrivial) model from the literature and add it to your benchmarks! If you do this, please describe the model you implemented in your writeup.
 
 
