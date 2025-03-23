@@ -16,16 +16,16 @@ class SineLayer(nn.Module):
         self.omega_0 = omega_0
         self.is_first = is_first
         self.d_in = d_in
-        raise NotImplementedError("Use your problem1 implementation")
+        self.linear = nn.Linear(d_in, d_out, bias=bias, device=d_in.device)
+        self.init_weights()
 
     def init_weights(self):
-        # first layer: sin(w_0 * Wx + b)
-        # general: sin(w^Tx + b)
-        a, b =  -np.sqrt(6 / self.d_in), np.sqrt(6 / self.d_in)
-        self.linear.weight.uniform_(a, b)
         if self.is_first:
-            # scale by factor of omega_0
-            self.linear.weight *= self.omega_0
+            # first layer: sin(w_0 * Wx + b)
+            self.linear.weight.uniform_(-1 / self.d_in, 1 / self.d_in)
+        else:
+            self.linear.weight.uniform_(-np.sqrt(6 / self.d_in) / self.omega_0, 
+                                        np.sqrt(6 / self.d_in) / self.omega_0)
 
     def forward(self, input):
-        return torch.sin(self.linear(input))
+        return torch.sin(self.omega_0 * self.linear(input))

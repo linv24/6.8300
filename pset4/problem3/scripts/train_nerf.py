@@ -111,7 +111,7 @@ def train(cfg: DictConfig):
                     (vis_h, vis_w),
                     mode="bilinear",
                     align_corners=False,
-                )[0]
+                )[0].to(device)
 
                 # Create labeled images directly using torch.cat for proper layout
                 gt_label = draw_label(
