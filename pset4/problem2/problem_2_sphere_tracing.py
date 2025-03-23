@@ -83,12 +83,15 @@ def camera_param_to_rays(c2w, intrinsics, H=128, W=128):
     # 2. Convert pixel coordinates to camera coordinates using intrinsics
     # 3. Transform camera coordinates to world coordinates using c2w
 
-    fx, fy, cx, cy = intrinsics
+    device = c2w.device
+
+    fx, fy, cx, cy = intrinsics.to(device)
 
     x_pixel, y_pixel = torch.meshgrid(torch.arange(W), torch.arange(H), indexing="xy")
+    x_pixel, y_pixel = x_pixel.to(device), y_pixel.to(device)
     x_cam = (x_pixel - cx + 0.5) / fx # shift coords in camera plane by 0.5
     y_cam = (y_pixel - cy + 0.5) / fy
-    z_cam = torch.ones_like(x_cam)
+    z_cam = torch.ones_like(x_cam, device=device)
 
     ray_directions = torch.stack((x_cam, y_cam, z_cam), dim=-1) # shape: (H, W, 3)
     ray_directions = ray_directions @ c2w[:3, :3].T
@@ -148,39 +151,29 @@ def sphere_tracing(
     # 6. Reconstruct image from hit points
 
     H, W, _ = ray_origins.shape
-    image = torch.zeros((H, W, 3))
-    t = torch.full((H, W), t_near)
-    active_mask = torch.ones((H, W), dtype=torch.int64)
-
-    print(f"{ray_origins=}")
-    print(f"{ray_directions=}")
+    image = torch.zeros((H, W, 3), device=device)
+    t = torch.full((H, W), t_near, device=device)
+    active_mask = torch.ones((H, W), dtype=torch.bool, device=device)
 
     for _ in range(max_iter):
-        print(_)
         if not active_mask.any():
             break
 
         # sample points along rays
         curr_points = ray_origins + t[..., None] * ray_directions
-        print(f"{curr_points=}")
         # query sdf for colors
         sdf, colors = model(curr_points.flatten(0,1))
-        sdf, colors = sdf.reshape((H, W, -1)).squeeze(), colors.reshape((H, W, -1))
-        print(f"{sdf=}")
+        sdf, colors = sdf.view(H, W), colors.view(H, W, 3)
         # update active mask for hit points
         hit_mask = (sdf < epsilon).squeeze()
-        print(f"{active_mask.sum()=}")
         active_mask &= ~hit_mask
         # update active mask for points that are > t_far
-        far_mask = (t > t_far).squeeze()
+        far_mask = (t >= t_far).squeeze()
         active_mask &= ~far_mask
         # update image with hit points' colors
         image[hit_mask] = colors[hit_mask]
-        print(f"{hit_mask.sum()=}")
-        print(f"{colors[hit_mask]=}")
         # update t with new distances
         t[active_mask] += sdf[active_mask]
-        break # debug
 
     return image
 
