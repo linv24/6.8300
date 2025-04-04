@@ -10,6 +10,7 @@ import zipfile
 import timm
 from timm.data import resolve_data_config
 from timm.data.transforms_factory import create_transform
+from torch.utils.data import DataLoader
 from tqdm.auto import tqdm
 
 
@@ -160,7 +161,21 @@ def get_features(
     features = None
 
     ### YOUR CODE STARTS HERE ###
+    dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=False, num_workers=num_workers)
+    feature_extractor = feature_extractor.to(device)
+    features_list = []
+    labels_list = []
 
+    with torch.no_grad():
+        for images, labels in dataloader:
+            images = images.to(device)
+            extracted_features = feature_extractor(images)
+
+            features_list.append(extracted_features.cpu().numpy())
+            labels_list.append(labels.cpu().numpy())
+
+    features = np.concatenate(features_list, axis=0)
+    labels = np.concatenate(labels_list, axis=0)
     ### YOUR CODE ENDS HERE ###
 
     return features, dataset.labels, dataset.num_classes
@@ -214,7 +229,31 @@ def train_linear_probe(
     epoch_losses = []
 
     ### YOUR CODE STARTS HERE ###
-    
+    dataloader = DataLoader(features_dataset, batch_size=batch_size, shuffle=True, num_workers=num_workers)
+    num_features = features_dataset.features.shape[1]
+    num_classes = features_dataset.num_classes
+
+    linear_probe = torch.nn.Linear(num_features, num_classes, device=device)
+    optimizer = torch.optim.Adam(linear_probe.parameters(), lr=learning_rate, weight_decay=weight_decay)
+    criterion = torch.nn.CrossEntropyLoss()
+
+    for epoch in tqdm(range(num_epochs)):
+        epoch_loss = 0.0
+        linear_probe.train()
+
+        for features, labels in dataloader:
+            features = torch.tensor(features, dtype=torch.float32).to(device)
+            labels = torch.tensor(labels, dtype=torch.long).to(device)
+            
+            optimizer.zero_grad()
+            outputs = linear_probe(features)
+            loss = criterion(outputs, labels)
+            loss.backward()
+            optimizer.step()
+
+            epoch_loss += loss.item()
+
+        epoch_losses.append(epoch_loss / len(dataloader))
     ### YOUR CODE ENDS HERE ###
 
     return linear_probe, epoch_losses
@@ -271,7 +310,11 @@ def find_nearest_neighbors(
     similarities = None
 
     ### YOUR CODE STARTS HERE ###
-
+    query_features = query_features / np.linalg.norm(query_features)
+    features = features / np.linalg.norm(features, axis=1, keepdims=True)
+    similarities = np.dot(features, query_features) # (N, num_features) • (num_features,)
+    indices = np.argsort(similarities)[-k:][::-1] # top k indices
+    similarities = similarities[indices]
     ### YOUR CODE ENDS HERE ###
 
     return indices, similarities
