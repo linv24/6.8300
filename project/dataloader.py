@@ -622,14 +622,14 @@ class SpatialDataset(Dataset):
         return image
 
 
-def create_dataloader(split, predicate_dim, object_dim, datapath, num_workers,
+def create_dataloader(split, predicate_dim, object_dim, data_path, num_workers,
                       crop, norm_data, load_img, data_aug_shift,
                       data_aug_color, batch_size, resize_mask, trans_vec):
     dataset_args = {
         "split": split,
         "predicate_dim": predicate_dim,
         "object_dim": object_dim,
-        "data_path": datapath,
+        "data_path": data_path,
         "load_img": load_img,
         "data_aug_shift": (data_aug_shift and split == "train"),
         "data_aug_color": (data_aug_color and split == "train"),
