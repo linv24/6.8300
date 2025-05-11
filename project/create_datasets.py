@@ -42,7 +42,7 @@ def main():
         "far from", # depth
     ])
 
-    model = CLIPModel.from_pretrained(CLIP_MODEL_NAME)
+    model = CLIPModel.from_pretrained(CLIP_MODEL_NAME).to(device)
     processor = CLIPProcessor.from_pretrained(CLIP_MODEL_NAME)
     model.eval()
 
