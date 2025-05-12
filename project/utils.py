@@ -9,6 +9,7 @@ from tqdm import tqdm
 from sklearn.metrics import confusion_matrix
 import numpy as np
 
+from config import *
 
 
 class PredicateProbeDataset(Dataset):
@@ -64,7 +65,7 @@ def train(model, train_dataloader, val_dataloader, embedding_type="image",
     train_confusion_matrices = []
     val_confusion_matrices = []
 
-    for epoch in tqdm(range(num_epochs)):
+    for epoch in tqdm(range(num_epochs), disable=not verbose):
         # training 
         model.train()
         epoch_train_loss = 0.0
@@ -137,11 +138,12 @@ def train(model, train_dataloader, val_dataloader, embedding_type="image",
             print(f"  [epoch {epoch+1}] train/val loss: {epoch_train_loss/len(train_labels):.4f}/{epoch_val_loss/len(val_labels):.4f}, "
                   f"train/val acc: {train_acc:.4f}/{val_acc:.4f}")
 
-    print(f"Final train/val loss: {train_losses[-1]:.4f}/{val_losses[-1]:.4f}, "
-          f"final train/val acc: {train_acc:.4f}/{val_acc:.4f}")
+    if verbose:
+        print(f"Final train/val loss: {train_losses[-1]:.4f}/{val_losses[-1]:.4f}, "
+            f"final train/val acc: {train_acc:.4f}/{val_acc:.4f}")
     return train_losses, val_losses, train_confusion_matrices, val_confusion_matrices
     
-def compute_cm_metrics(confusion_matrix: np.ndarray):
+def compute_cm_metrics(confusion_matrix: np.ndarray, eps=1e-8):
     """
     Compute accuracy, precision, recall, and f1 from a confusion matrix.
     """
@@ -149,10 +151,10 @@ def compute_cm_metrics(confusion_matrix: np.ndarray):
 
     tn, fp, fn, tp = confusion_matrix.flatten()
 
-    accuracy = (tp + tn) / (tp + tn + fp + fn)
-    precision = tp / (tp + fp)
-    recall = tp / (tp + fn)
-    f1 = (2 * precision * recall) / (precision + recall)
+    accuracy = (tp + tn) / (tp + tn + fp + fn + eps)
+    precision = tp / (tp + fp + eps)
+    recall = tp / (tp + fn + eps)
+    f1 = (2 * precision * recall) / (precision + recall + eps)
 
     return {
         "accuracy": accuracy,
