@@ -1,0 +1,68 @@
+{
+  "behind": {
+    "train": 854,
+    "valid": 82,
+    "test": 66,
+    "total": 1002
+  },
+  "in front of": {
+    "train": 820,
+    "valid": 84,
+    "test": 128,
+    "total": 1032
+  },
+  "to the side of": {
+    "train": 1029,
+    "valid": 100,
+    "test": 348,
+    "total": 1477
+  },
+  "near": {
+    "train": 450,
+    "valid": 48,
+    "test": 238,
+    "total": 736
+  },
+  "below": {
+    "train": 932,
+    "valid": 100,
+    "test": 148,
+    "total": 1180
+  },
+  "to the left of (wrt you)": {
+    "train": 1017,
+    "valid": 100,
+    "test": 252,
+    "total": 1369
+  },
+  "to the right of (wrt you)": {
+    "train": 954,
+    "valid": 106,
+    "test": 230,
+    "total": 1290
+  },
+  "inside": {
+    "train": 426,
+    "valid": 52,
+    "test": 120,
+    "total": 598
+  },
+  "on": {
+    "train": 1444,
+    "valid": 186,
+    "test": 232,
+    "total": 1862
+  },
+  "covering": {
+    "train": 256,
+    "valid": 20,
+    "test": 314,
+    "total": 590
+  },
+  "far from": {
+    "train": 178,
+    "valid": 26,
+    "test": 94,
+    "total": 298
+  }
+}
