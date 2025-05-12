@@ -66,7 +66,7 @@ def main():
             predicate_names = batch["predicate"]["name"]
             depth_images = [depth_image.repeat(3, 1, 1) for depth_image in batch["depth_crop"]] # duplicate channel dim
             weights = batch["weight"]
-            labels = batch["label"]
+            labels = batch["label"].long()
 
             # encode images
             image_inputs = processor(images=images, return_tensors="pt", do_rescale=False).to(device)
@@ -97,6 +97,7 @@ def main():
                         "object_name": object_names[i],
                         "predicate_name": predicate_names[i],
                         "weight": weights[i],
+                        "label": labels[i],
                     }
                     split_samples_dict[predicate_names[i]].append(sample)
 
