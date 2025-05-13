@@ -5,9 +5,7 @@ DATA_DIRECTORY = "data"
 MODEL_DIRECTORY = "models"
 OUTPUT_DIRECTORY = "output"
 
-allowed_predicates = set([
-    "in front of", # occlusion, depth
-    "behind", # occlusion, depth
+allowed_predicates = [
     "below", # relative position
     "to the left of (wrt you)", # relative position
     "to the right of (wrt you)", # relative position
@@ -15,6 +13,8 @@ allowed_predicates = set([
     "on", # relative position
     "covering", # occlusion
     "inside", # occlusion
+    "in front of", # occlusion, depth
+    "behind", # occlusion, depth
     "near", # depth
     "far from", # depth
-])
+]
