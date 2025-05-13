@@ -73,6 +73,66 @@ def main():
 
         print(f"finished mlp_{predicate} ({time.perf_counter() - start_time:.2f}s)")
 
+def main_depth():
+    """
+    Same as above, but with:
+    * a higher total_steps
+    * lower lr
+    * higher input_dim for MLP (512 * 2 = 1024)
+    * saving with a different file path
+    """
+    # training all predicates
+    batch_size = 16
+    total_steps = 16_000
+    hidden_dim = 128
+    num_trials = 5
+
+    for predicate in allowed_predicates:
+        print(f"starting mlp_{predicate}...")
+        start_time = time.perf_counter()
+
+        data_file_path = f"{DATA_DIRECTORY}/predicate_probe_data/{predicate}"
+        train_ds = PredicateProbeDataset(data_file_path + "_train.pt")
+        val_ds = PredicateProbeDataset(data_file_path + "_valid.pt")
+
+        num_epochs = total_steps // (len(train_ds) // batch_size)
+
+        best_val_acc = 0.0
+        all_metrics = defaultdict(list)
+        """
+        all_metrics has the following keys:
+            all_train_losses: num_trials lists of per-epoch training losses
+            all_val_losses: num_trials lists of per-epoch val losses
+            all_train_confusion_matrices: num_trials lists of per-epoch train cms
+            all_val_confusion_matrices: num_trials lists of per-epoch val cms
+        """
+
+        for _ in range(num_trials):
+            mlp_model = MLP(input_dim=1024, hidden_dim=hidden_dim)
+            train_dl = DataLoader(train_ds, batch_size=batch_size, shuffle=True) 
+            val_dl = DataLoader(val_ds, batch_size=batch_size, shuffle=True) 
+
+            train_outputs = train(mlp_model, train_dl, val_dl, embedding_type="image+depth",
+                                num_epochs=num_epochs, lr=1e-6, verbose=False)
+            train_losses, val_losses, train_confusion_matrices, val_confusion_matrices = train_outputs
+            all_metrics["all_train_losses"].append(train_losses)
+            all_metrics["all_val_losses"].append(val_losses)
+            all_metrics["all_train_confusion_matrices"].append(train_confusion_matrices)
+            all_metrics["all_val_confusion_matrices"].append(val_confusion_matrices)
+
+            last_val_acc = compute_cm_metrics(val_confusion_matrices[-1])["accuracy"]
+            # save best model, based on validation accuracy
+            if last_val_acc > best_val_acc:
+                best_val_acc = last_val_acc
+                torch.save(mlp_model.state_dict(), f"{MODEL_DIRECTORY}/depth_mlp_{predicate}.pt")
+
+        # save training metrics
+        torch.save(all_metrics, f"{OUTPUT_DIRECTORY}/depth_trainval_metrics_{predicate}.pt")
+
+        print(f"finished mlp_{predicate} ({time.perf_counter() - start_time:.2f}s)")
+
 
 if __name__ == "__main__":
-    main()
+    # main()
+
+    main_depth()

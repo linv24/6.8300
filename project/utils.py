@@ -77,9 +77,8 @@ def train(model, train_dataloader, val_dataloader, embedding_type="image",
         for batch in train_dataloader:
             if embedding_type == "image":
                 x = batch["image_emb"].to(device)
-            elif embedding_type == "multimodal":
-                # TODO
-                pass
+            elif embedding_type == "image+depth":
+                x = torch.concatenate((batch["image_emb"], batch["depth_emb"]), dim=1).to(device)
             else:
                 raise Exception
             y = batch["label"].float().to(device)
@@ -114,9 +113,8 @@ def train(model, train_dataloader, val_dataloader, embedding_type="image",
             for batch in val_dataloader:
                 if embedding_type == "image":
                     x = batch["image_emb"].to(device)
-                elif embedding_type == "multimodal":
-                    # TODO
-                    pass
+                elif embedding_type == "image+depth":
+                    x = torch.concatenate((batch["image_emb"], batch["depth_emb"]), dim=1).to(device)
                 else:
                     raise Exception
                 y = batch["label"].float().to(device)
@@ -174,7 +172,7 @@ def interpolate_to_length(values, target_length):
     f = interp1d(x_original, values, kind="linear")
     return f(x_target).tolist()
 
-def plot_metrics(predicates):
+def plot_metrics(predicates, embedding_type="image"):
     max_length = 800
     fig, ax = plt.subplots(2, 2, figsize=(12, 8))
     ax[0,0].set_title("Averaged Training Loss")
@@ -185,7 +183,7 @@ def plot_metrics(predicates):
     cmap = plt.get_cmap("tab20", len(predicates))
     
     for ix, predicate in enumerate(predicates):
-        all_metrics = torch.load(f"{OUTPUT_DIRECTORY}/trainval_metrics_{predicate}.pt", weights_only=False)
+        all_metrics = torch.load(f"{OUTPUT_DIRECTORY}/{"" if embedding_type == "image" else "depth_"}trainval_metrics_{predicate}.pt", weights_only=False)
 
         all_train_losses = all_metrics["all_train_losses"]
         all_val_losses = all_metrics["all_val_losses"]
@@ -228,9 +226,8 @@ def evaluate(model, test_dataloader, embedding_type="image",
         for batch in test_dataloader:
             if embedding_type == "image":
                 x = batch["image_emb"].to(device)
-            elif embedding_type == "multimodal":
-                # TODO
-                raise NotImplementedError
+            elif embedding_type == "image+depth":
+                x = torch.concatenate((batch["image_emb"], batch["depth_emb"]), dim=1).to(device)
             else:
                 raise Exception
             y = batch["label"].float().to(device)
@@ -252,7 +249,7 @@ def evaluate(model, test_dataloader, embedding_type="image",
         print(f"test loss: {test_loss:.4f}, test acc: {test_acc:.4f}")
     return test_loss, test_cm
 
-def get_val_metrics(predicates):
+def get_val_metrics(predicates, embedding_type="image"):
     """
     Returns validation clf metrics for the last training step.
     """
@@ -261,7 +258,7 @@ def get_val_metrics(predicates):
     for ix, predicate in enumerate(predicates):
         # validation metrics
         all_metrics = torch.load(
-            f"{OUTPUT_DIRECTORY}/trainval_metrics_{predicate}.pt", weights_only=False
+            f"{OUTPUT_DIRECTORY}/{"" if embedding_type == "image" else "depth_"}trainval_metrics_{predicate}.pt", weights_only=False
         )
         all_val_cms = all_metrics["all_val_confusion_matrices"]
         best_val_cms = [cm_list[-1] for cm_list in all_val_cms] # only get last step's metrics
@@ -275,7 +272,7 @@ def get_val_metrics(predicates):
 
     return d
 
-def get_test_metrics(predicates):
+def get_test_metrics(predicates, embedding_type="image"):
     """
     Returns test clf metrics as a dict of the format:
         predicate: {
@@ -292,22 +289,23 @@ def get_test_metrics(predicates):
         test_ds = PredicateProbeDataset(data_file_path + "_test.pt")
         test_dl = DataLoader(test_ds, batch_size=16, shuffle=False) 
 
-        mlp_model = MLP()
-        mlp_model.load_state_dict(torch.load(f"{MODEL_DIRECTORY}/mlp_{predicate}.pt"))
-        test_loss, test_cm = evaluate(mlp_model, test_dl)
+        input_dim = 512 if embedding_type == "image" else 1024
+        mlp_model = MLP(input_dim=input_dim)
+        mlp_model.load_state_dict(torch.load(f"{MODEL_DIRECTORY}/{"" if embedding_type == "image" else "depth_"}mlp_{predicate}.pt"))
+        test_loss, test_cm = evaluate(mlp_model, test_dl, embedding_type)
         d[predicate] = compute_cm_metrics(test_cm)
 
     return d
 
-def plot_bar_clf_metrics(predicates, split):
+def plot_bar_clf_metrics(predicates, split, embedding_type="image"):
     metric_labels = ["Accuracy", "Precision", "Recall", "F1"]
     num_predicates = len(predicates)
     num_metrics = len(metric_labels)
 
     if split == "val":
-        metrics = get_val_metrics(predicates)
+        metrics = get_val_metrics(predicates, embedding_type)
     elif split == "test":
-        metrics = get_test_metrics(predicates)
+        metrics = get_test_metrics(predicates, embedding_type)
     metrics_array = np.array(
         [[metric["accuracy"], metric["precision"], metric["recall"], metric["f1"]]
          for metric in metrics.values()]
