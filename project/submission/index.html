@@ -268,9 +268,17 @@
 				<div class="margin-left-block">
 				</div>
 		    <div class="main-content-block">
-					<h1>Related Work</h1>
-					<p>Recent work has investigated CLIP's role in 3D tasks, though often without analyzing its internal spatial representations. Lin et al. <a href="#ref_2">[2]</a> use CLIP embeddings to associate semantic meaning with 3D NeRF reconstructions in CLIP-Fields, treating CLIP as a powerful prior but not evaluating its geometric understanding. Qiu et al. <a href="#ref_3">[3]</a> identify CLIP’s limitations in spatial reasoning and propose Spatial Correlation Distillation to refine its spatial awareness via supervision from a spatially structured teacher model. Tziafas et al. <a href="#ref_1">[4]</a> distill 2D CLIP features into 3D representations using object-centric priors to support robotic tasks. While these works enhance or leverage CLIP for downstream 3D applications, our project takes a complementary approach by directly probing CLIP’s frozen embeddings to assess whether fundamental 3D spatial relationships, such as occlusion and containment, are already encoded and linearly decodable.</p> 
-		    </div>
+				<h1>Related Work</h1>
+				
+				<p>Recent work has investigated CLIP's role in 3D tasks, though often without analyzing its internal spatial representations. Lin et al. <a href="#ref_2">[2]</a> introduce CLIP-NeRF, which embeds CLIP’s joint vision-language space into 3D NeRF reconstructions to enable text-driven scene editing. While CLIP is used as a powerful semantic prior, the focus is on guiding neural radiance fields with natural language, not understanding whether CLIP embeddings intrinsically capture 3D spatial relationships.</p>
+
+				<p>Qiu et al. <a href="#ref_3">[3]</a> identify limitations in CLIP's native spatial reasoning and propose Spatial Correlation Distillation (SCD), a framework that supervises CLIP using a spatially structured teacher model to enhance its spatial alignment. Although their results improve performance on spatially grounded vision-language tasks, their method relies on training and does not interrogate whether CLIP’s frozen representations already contain usable spatial structure.</p>
+
+				<p>Tziafas et al. <a href="#ref_4">[4]</a> propose a 3D feature distillation pipeline that transfers 2D CLIP features into a 3D-aware latent space using object-centric priors, improving robotic object manipulation and interaction. Their work assumes the need for explicit distillation to bridge 2D and 3D gaps, but it does not assess what 3D geometric priors might already exist in the original CLIP embeddings.</p>
+
+				<p>While these works enhance or extend CLIP for downstream 3D applications, our project takes a complementary and diagnostic approach by directly probing CLIP’s frozen embeddings. We assess whether fundamental 3D spatial relationships, such as occlusion, containment, and relative depth, are already encoded and linearly decodable, without further fine-tuning or distillation. By doing so, our work fills a gap in the literature by providing empirical insight into the geometric reasoning capacity latent in pretrained vision-language models like CLIP.</p>
+
+			</div>
 		    <div class="margin-right-block">
 		    </div>
 		</div>
