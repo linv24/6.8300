@@ -1,28 +1,4 @@
 {
-  "behind": {
-    "train": 854,
-    "valid": 82,
-    "test": 66,
-    "total": 1002
-  },
-  "in front of": {
-    "train": 820,
-    "valid": 84,
-    "test": 128,
-    "total": 1032
-  },
-  "to the side of": {
-    "train": 1029,
-    "valid": 100,
-    "test": 348,
-    "total": 1477
-  },
-  "near": {
-    "train": 450,
-    "valid": 48,
-    "test": 238,
-    "total": 736
-  },
   "below": {
     "train": 932,
     "valid": 100,
@@ -41,11 +17,11 @@
     "test": 230,
     "total": 1290
   },
-  "inside": {
-    "train": 426,
-    "valid": 52,
-    "test": 120,
-    "total": 598
+  "to the side of": {
+    "train": 1029,
+    "valid": 100,
+    "test": 348,
+    "total": 1477
   },
   "on": {
     "train": 1444,
@@ -58,6 +34,30 @@
     "valid": 20,
     "test": 314,
     "total": 590
+  },
+  "inside": {
+    "train": 426,
+    "valid": 52,
+    "test": 120,
+    "total": 598
+  },
+  "in front of": {
+    "train": 820,
+    "valid": 84,
+    "test": 128,
+    "total": 1032
+  },
+  "behind": {
+    "train": 854,
+    "valid": 82,
+    "test": 66,
+    "total": 1002
+  },
+  "near": {
+    "train": 450,
+    "valid": 48,
+    "test": 238,
+    "total": 736
   },
   "far from": {
     "train": 178,
